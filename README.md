@@ -1,6 +1,6 @@
-# README_CN.md
+# README.md
 
-此文件为 Claude Code (claude.ai/code) 处理本仓库代码时提供指导。
+此文件为 Claude Code (claude.ai/code) 处理本仓库代码时提供指导。[English Version](./README_EN.md)
 
 ## 项目概览
 
