@@ -33,8 +33,6 @@ find_package(Qt5 REQUIRED COMPONENTS
     Widgets
     Core
     Gui
-    Multimedia
-    Sql
 )
 
 # --- B. 查找 OpenCV ---
@@ -78,8 +76,6 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     Qt5::Widgets
     Qt5::Core
     Qt5::Gui
-    Qt5::Multimedia
-    Qt5::Sql
 
     # --- OpenCV ---
     ${OpenCV_LIBS}

@@ -3,7 +3,6 @@
 # ---------------------
 build/
 bin/
-lib/
 *.o
 *.obj
 *.so
@@ -38,6 +37,8 @@ Makefile*
 .vscode/
 .idea/
 .DS_Store
+.claude/
+CLAUDE.md
 
 # ---------------------
 # 5. 特殊文件处理 (AI 模型)
