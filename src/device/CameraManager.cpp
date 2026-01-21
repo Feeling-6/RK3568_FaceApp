@@ -112,7 +112,7 @@ QImage CameraManager::matToQImage(const cv::Mat &mat)
     );
 
     // 2. 准备目标 QImage
-    // 为了降低 UI 压力，这里其实可以顺便把图缩小
+    // 为了降低 UI 压力，这里其实可以顺便把图缩小(需要使用imresize)
     // 比如：如果你的 UI 控件只有 640x360，这里直接生成 640x360 的 QImage 最好
     // 下面演示保持原尺寸 (1280x720)，如果你想缩放，修改这里的 width/height 即可
     int dstWidth = mat.cols;  // 或者 640
@@ -131,8 +131,9 @@ QImage CameraManager::matToQImage(const cv::Mat &mat)
 
     // 4. 执行转换 (Copy + Format Convert + Resize if needed)
     // imresize 可以同时处理 缩放 和 格式转换
+    // imflip 同时支持 格式转换(BGR->RGB) 和 翻转，但不支持缩放
     // 如果尺寸一样，它就只做格式转换
-    IM_STATUS status = imresize(src, dst);
+    IM_STATUS status = imflip(src, dst, IM_HAL_TRANSFORM_FLIP_H);
 
     if (status != IM_STATUS_SUCCESS) {
         qWarning() << "RGA matToQImage failed:" << status;
