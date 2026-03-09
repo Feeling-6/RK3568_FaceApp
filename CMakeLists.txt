@@ -30,9 +30,11 @@ set(RGA_ROOT  "${CMAKE_SOURCE_DIR}/3rdparty/rga")
 # --- A. 查找 Qt5 ---
 # 如果在板端或交叉编译环境报错找不到 Qt，可能需要设置 CMAKE_PREFIX_PATH
 find_package(Qt5 REQUIRED COMPONENTS
-    Widgets
     Core
     Gui
+    Quick
+    Qml
+    QuickControls2
 )
 
 # --- B. 查找 OpenCV ---
@@ -56,26 +58,32 @@ include_directories(
 # =============================================================
 # 5. 源文件管理
 # =============================================================
-# 递归查找 src 目录下所有的 .cpp, .h, .ui 文件
+# 递归查找 src 目录下所有的 .cpp, .h 文件
 file(GLOB_RECURSE SRC_FILES
     "src/*.cpp"
     "src/*.h"
-    "src/*.ui"
+)
+
+# Qt 资源文件 (包含 QML)
+set(RESOURCE_FILES
+    resources.qrc
 )
 
 # =============================================================
 # 6. 生成可执行文件
 # =============================================================
-add_executable(${PROJECT_NAME} ${SRC_FILES})
+add_executable(${PROJECT_NAME} ${SRC_FILES} ${RESOURCE_FILES})
 
 # =============================================================
 # 7. 链接库文件 (核心部分)
 # =============================================================
 target_link_libraries(${PROJECT_NAME} PRIVATE
     # --- Qt 库 ---
-    Qt5::Widgets
     Qt5::Core
     Qt5::Gui
+    Qt5::Quick
+    Qt5::Qml
+    Qt5::QuickControls2
 
     # --- OpenCV ---
     ${OpenCV_LIBS}

@@ -282,7 +282,7 @@ cv::Mat RetinaFace::preprocessFace(const cv::Mat& img, const cv::Point2f landmar
 }
 
 // ---------------------------------------------------------
-// 正脸判断函数 (基于5个关键点的几何分析)
+// 正脸判断函数 (基于5个关键点的几何分析)可在下方修改判断阈值
 // ---------------------------------------------------------
 bool RetinaFace::isFrontalFace(const cv::Point2f landmarks[5]) {
     // landmarks[0]: 左眼
@@ -304,9 +304,8 @@ bool RetinaFace::isFrontalFace(const cv::Point2f landmarks[5]) {
     }
 
     // 2. 检查 Roll 角度 (脸部旋转倾斜)
-    // 双眼的 y 坐标差异不应超过眼间距的 12%
     float eye_y_diff = fabs(right_eye.y - left_eye.y);
-    float roll_threshold = eye_distance * 0.12f;
+    float roll_threshold = eye_distance * 0.20f;// 双眼的 y 坐标差异不应超过眼间距的 20%
     if (eye_y_diff > roll_threshold) {
         return false;
     }
@@ -317,7 +316,7 @@ bool RetinaFace::isFrontalFace(const cv::Point2f landmarks[5]) {
 
     // 鼻尖应该接近脸部中线
     float nose_offset = fabs(nose.x - face_center_x);
-    float yaw_threshold = eye_distance * 0.12f; // 允许12%的偏移
+    float yaw_threshold = eye_distance * 0.30f; // 允许30%的偏移
     if (nose_offset > yaw_threshold) {
         return false;
     }
@@ -335,7 +334,7 @@ bool RetinaFace::isFrontalFace(const cv::Point2f landmarks[5]) {
     float right_eye_to_nose = sqrt(pow(nose.x - right_eye.x, 2) + pow(nose.y - right_eye.y, 2));
     float symmetry_ratio = std::max(left_eye_to_nose, right_eye_to_nose) /
                            std::min(left_eye_to_nose, right_eye_to_nose);
-    if (symmetry_ratio > 1.20f) { // 允许20%的不对称
+    if (symmetry_ratio > 1.40f) { // 允许40%的不对称
         return false;
     }
 
