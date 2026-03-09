@@ -13,11 +13,11 @@ public:
     // 初始化数据库
     int init(const std::string& db_path);
 
-    // 录入人脸特征：如果已存在相同特征返回-1并设置错误信息"请不要重复录入"，成功返回录入的序号
-    int enrollFace(const std::vector<float>& feature, std::string& message);
+    // 录入人脸特征：成功返回true并通过outId返回录入序号，失败返回false（如已存在相同特征）
+    bool enrollFace(const std::vector<float>& feature, int& outId);
 
-    // 识别人脸特征：找到相同特征返回序号并设置message为"你是X号"，未找到返回-1并设置message为"请先录入人脸"
-    int recognizeFace(const std::vector<float>& feature, std::string& message);
+    // 识别人脸特征：成功返回true并通过outId返回匹配序号，失败返回false（未找到匹配）
+    bool recognizeFace(const std::vector<float>& feature, int& outId);
 
     // 清空数据库
     void clearAll();

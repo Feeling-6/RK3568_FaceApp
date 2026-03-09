@@ -167,20 +167,21 @@ void MainWindow::on_btnRecognize_clicked()
 
     // 4. 在数据库中查找匹配的人脸
     qDebug() << "正在数据库中查找匹配人脸...";
-    std::string message;
-    int faceId = m_facedb->recognizeFace(feature, message);
+    int faceId = -1;
+    bool recognized = m_facedb->recognizeFace(feature, faceId);
 
     // 5. 根据返回结果更新UI提示
-    if (faceId > 0) {
+    if (recognized) {
         // 识别成功
-        qDebug() << "人脸识别成功！" << QString::fromStdString(message);
+        QString message = QString("你是%1号").arg(faceId);
+        qDebug() << "人脸识别成功！" << message;
         ui->promptLabel->setStyleSheet("color: green;");
-        ui->promptLabel->setText(QString::fromStdString(message));
+        ui->promptLabel->setText(message);
     } else {
         // 识别失败（数据库中没有匹配的人脸）
-        qDebug() << "人脸识别失败:" << QString::fromStdString(message);
+        qDebug() << "人脸识别失败: 未找到匹配的人脸";
         ui->promptLabel->setStyleSheet("color: orange;");
-        ui->promptLabel->setText(QString::fromStdString(message));
+        ui->promptLabel->setText("请先录入人脸");
     }
 }
 
@@ -200,7 +201,8 @@ void MainWindow::on_btnEntry_clicked()
     // 2. 从摄像头实时画面中获取对齐好的 112x112 人脸图像
     // 该函数在 RetinaFace 类中实现，已经包含了检测、对齐和裁剪逻辑
     qDebug() << "正在从摄像头获取人脸图像...";
-    cv::Mat alignedFace = m_retinaface->getAlignedFaceFromCamera(*m_camera);
+    cv::Point2f landmarks[5]; // 存储5个关键点
+    cv::Mat alignedFace = m_retinaface->getAlignedFaceFromCamera(*m_camera, landmarks);
 
     if (alignedFace.empty()) {
         qDebug() << "未能在当前画面中检测到人脸";
@@ -209,6 +211,16 @@ void MainWindow::on_btnEntry_clicked()
         return;
     }
     qDebug() << "成功检测到人脸! 尺寸:" << alignedFace.cols << "x" << alignedFace.rows;
+
+    // 2.5. 判断是否为正脸 (录入时严格要求)
+    bool isFrontal = m_retinaface->isFrontalFace(landmarks);
+    if (!isFrontal) {
+        qDebug() << "不是正脸: 请正对摄像头";
+        ui->promptLabel->setStyleSheet("color: orange;");
+        ui->promptLabel->setText("请正对摄像头，保持头部水平");
+        return;
+    }
+    qDebug() << "正脸检测通过!";
 
     // 3. 调用 MobileFaceNet 提取人脸特征向量
     qDebug() << "正在提取人脸特征...";
@@ -225,19 +237,20 @@ void MainWindow::on_btnEntry_clicked()
 
     // 4. 将特征向量存入数据库
     qDebug() << "正在将特征存入数据库...";
-    std::string message;
-    int faceId = m_facedb->enrollFace(feature, message);
+    int faceId = -1;
+    bool enrolled = m_facedb->enrollFace(feature, faceId);
 
     // 5. 根据返回结果更新UI提示
-    if (faceId > 0) {
+    if (enrolled) {
         // 录入成功
-        qDebug() << "人脸录入成功！" << QString::fromStdString(message);
+        QString message = QString("录入成功，序号: %1").arg(faceId);
+        qDebug() << "人脸录入成功！" << message;
         ui->promptLabel->setStyleSheet("color: green;");
-        ui->promptLabel->setText(QString::fromStdString(message));
+        ui->promptLabel->setText(message);
     } else {
         // 录入失败（可能是重复录入）
-        qDebug() << "人脸录入失败:" << QString::fromStdString(message);
+        qDebug() << "人脸录入失败: 重复录入";
         ui->promptLabel->setStyleSheet("color: orange;");
-        ui->promptLabel->setText(QString::fromStdString(message));
+        ui->promptLabel->setText("请不要重复录入");
     }
 }

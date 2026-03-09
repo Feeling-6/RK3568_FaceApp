@@ -239,8 +239,30 @@ cv::Mat RetinaFace::getAlignedFaceFromCamera(CameraManager& camera) {
     if (faces.empty()) return cv::Mat();
 
     // 取最大的脸
-    auto bestFace = *std::max_element(faces.begin(), faces.end(), 
+    auto bestFace = *std::max_element(faces.begin(), faces.end(),
         [](const FaceInfo& a, const FaceInfo& b){ return a.box.area() < b.box.area(); });
+
+    return preprocessFace(frame, bestFace.landmarks);
+}
+
+// 重载版本：返回对齐人脸图像 + 关键点
+cv::Mat RetinaFace::getAlignedFaceFromCamera(CameraManager& camera, cv::Point2f outLandmarks[5]) {
+    cv::Mat frame;
+    if (!camera.getLatestFrame(frame) || frame.empty()) return cv::Mat();
+
+    std::vector<FaceInfo> faces;
+    detect(frame, faces);
+
+    if (faces.empty()) return cv::Mat();
+
+    // 取最大的脸
+    auto bestFace = *std::max_element(faces.begin(), faces.end(),
+        [](const FaceInfo& a, const FaceInfo& b){ return a.box.area() < b.box.area(); });
+
+    // 复制关键点到输出参数
+    for (int i = 0; i < 5; i++) {
+        outLandmarks[i] = bestFace.landmarks[i];
+    }
 
     return preprocessFace(frame, bestFace.landmarks);
 }
@@ -257,4 +279,83 @@ cv::Mat RetinaFace::preprocessFace(const cv::Mat& img, const cv::Point2f landmar
         cv::warpAffine(img, aligned, M, cv::Size(112, 112));
     }
     return aligned;
+}
+
+// ---------------------------------------------------------
+// 正脸判断函数 (基于5个关键点的几何分析)
+// ---------------------------------------------------------
+bool RetinaFace::isFrontalFace(const cv::Point2f landmarks[5]) {
+    // landmarks[0]: 左眼
+    // landmarks[1]: 右眼
+    // landmarks[2]: 鼻尖
+    // landmarks[3]: 左嘴角
+    // landmarks[4]: 右嘴角
+
+    cv::Point2f left_eye = landmarks[0];
+    cv::Point2f right_eye = landmarks[1];
+    cv::Point2f nose = landmarks[2];
+    cv::Point2f left_mouth = landmarks[3];
+    cv::Point2f right_mouth = landmarks[4];
+
+    // 1. 计算双眼间距 (作为参考尺度)
+    float eye_distance = sqrt(pow(right_eye.x - left_eye.x, 2) + pow(right_eye.y - left_eye.y, 2));
+    if (eye_distance < 10.0f) { // 防止异常值
+        return false;
+    }
+
+    // 2. 检查 Roll 角度 (脸部旋转倾斜)
+    // 双眼的 y 坐标差异不应超过眼间距的 12%
+    float eye_y_diff = fabs(right_eye.y - left_eye.y);
+    float roll_threshold = eye_distance * 0.12f;
+    if (eye_y_diff > roll_threshold) {
+        return false;
+    }
+
+    // 3. 检查 Yaw 角度 (左右偏转)
+    // 计算脸部中线 x 坐标 (双眼中点)
+    float face_center_x = (left_eye.x + right_eye.x) / 2.0f;
+
+    // 鼻尖应该接近脸部中线
+    float nose_offset = fabs(nose.x - face_center_x);
+    float yaw_threshold = eye_distance * 0.12f; // 允许12%的偏移
+    if (nose_offset > yaw_threshold) {
+        return false;
+    }
+
+    // 嘴巴中点也应该接近脸部中线
+    float mouth_center_x = (left_mouth.x + right_mouth.x) / 2.0f;
+    float mouth_offset = fabs(mouth_center_x - face_center_x);
+    if (mouth_offset > yaw_threshold) {
+        return false;
+    }
+
+    // 4. 检查左右对称性
+    // 左眼到鼻尖的距离 vs 右眼到鼻尖的距离
+    float left_eye_to_nose = sqrt(pow(nose.x - left_eye.x, 2) + pow(nose.y - left_eye.y, 2));
+    float right_eye_to_nose = sqrt(pow(nose.x - right_eye.x, 2) + pow(nose.y - right_eye.y, 2));
+    float symmetry_ratio = std::max(left_eye_to_nose, right_eye_to_nose) /
+                           std::min(left_eye_to_nose, right_eye_to_nose);
+    if (symmetry_ratio > 1.20f) { // 允许20%的不对称
+        return false;
+    }
+
+    // 5. 检查 Pitch 角度 (上下俯仰)
+    // 双眼中点到鼻尖的垂直距离 vs 鼻尖到嘴巴中点的垂直距离
+    // 比例应该在合理范围内 (大约 1:1 到 1.5:1)
+    float eye_center_y = (left_eye.y + right_eye.y) / 2.0f;
+    float mouth_center_y = (left_mouth.y + right_mouth.y) / 2.0f;
+    float eye_to_nose_dist = fabs(nose.y - eye_center_y);
+    float nose_to_mouth_dist = fabs(mouth_center_y - nose.y);
+
+    if (nose_to_mouth_dist < 5.0f || eye_to_nose_dist < 5.0f) { // 防止除零
+        return false;
+    }
+
+    float pitch_ratio = eye_to_nose_dist / nose_to_mouth_dist;
+    if (pitch_ratio < 0.5f || pitch_ratio > 2.0f) {
+        return false;
+    }
+
+    // 所有检查通过
+    return true;
 }

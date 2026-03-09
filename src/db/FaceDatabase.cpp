@@ -88,23 +88,23 @@ int FaceDatabase::createTable() {
 /**
  * @brief 录入人脸特征
  * @param feature 人脸特征向量(由MobileFaceNet提取的embedding)
- * @param message 输出消息，成功时为"录入成功，序号: X"，失败时为错误信息
- * @return 成功返回录入的人脸ID，失败返回-1
+ * @param outId 输出参数，成功时返回录入的人脸ID
+ * @return 成功返回true，失败返回false
  *
  * 录入流程：
  *   1. 检查是否已存在相似人脸(相似度 >= 0.6)
- *   2. 如果存在则拒绝录入，提示"请不要重复录入"
- *   3. 否则将特征向量转换为BLOB格式并插入数据库
+ *   2. 如果存在则拒绝录入，返回false
+ *   3. 否则将特征向量转换为BLOB格式并插入数据库，返回true
  */
-int FaceDatabase::enrollFace(const std::vector<float>& feature, std::string& message) {
+bool FaceDatabase::enrollFace(const std::vector<float>& feature, int& outId) {
+    outId = -1;  // 初始化为无效值
+
     if (!is_init || !db) {
-        message = "数据库未初始化";
-        return -1;
+        return false;
     }
 
     if (feature.empty()) {
-        message = "特征向量为空";
-        return -1;
+        return false;
     }
 
     // 查找是否已存在相似的人脸(防止重复录入)
@@ -113,8 +113,7 @@ int FaceDatabase::enrollFace(const std::vector<float>& feature, std::string& mes
 
     // 相似度超过阈值则认为是同一个人，拒绝录入
     if (similar_id > 0 && max_similarity >= SIMILARITY_THRESHOLD) {
-        message = "请不要重复录入";
-        return -1;
+        return false;
     }
 
     // 插入新的人脸特征
@@ -124,8 +123,7 @@ int FaceDatabase::enrollFace(const std::vector<float>& feature, std::string& mes
     // 预处理SQL语句(prepared statement可防止SQL注入)
     int ret = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
     if (ret != SQLITE_OK) {
-        message = "准备SQL语句失败";
-        return -1;
+        return false;
     }
 
     // 将特征向量(vector<float>)转换为BLOB二进制数据
@@ -135,47 +133,44 @@ int FaceDatabase::enrollFace(const std::vector<float>& feature, std::string& mes
     ret = sqlite3_bind_blob(stmt, 1, blob.data(), blob.size(), SQLITE_TRANSIENT);
 
     if (ret != SQLITE_OK) {
-        message = "绑定参数失败";
         sqlite3_finalize(stmt);  // 释放语句资源
-        return -1;
+        return false;
     }
 
     // 执行SQL语句
     ret = sqlite3_step(stmt);
     if (ret != SQLITE_DONE) {
-        message = "插入数据失败";
         sqlite3_finalize(stmt);
-        return -1;
+        return false;
     }
 
     // 获取新插入记录的ID
-    int new_id = sqlite3_last_insert_rowid(db);
+    outId = sqlite3_last_insert_rowid(db);
     sqlite3_finalize(stmt);  // 释放语句资源
 
-    message = "录入成功，序号: " + std::to_string(new_id);
-    return new_id;
+    return true;
 }
 
 /**
  * @brief 识别人脸特征
  * @param feature 待识别的人脸特征向量
- * @param message 输出消息，成功时为"你是X号"，失败时为"请先录入人脸"
- * @return 识别成功返回匹配的人脸ID，失败返回-1
+ * @param outId 输出参数，成功时返回匹配的人脸ID
+ * @return 识别成功返回true，失败返回false
  *
  * 识别流程：
  *   1. 遍历数据库中所有人脸特征
  *   2. 计算与当前特征的相似度，找到最相似的人脸
- *   3. 如果相似度 >= 0.6，则认为匹配成功
+ *   3. 如果相似度 >= 0.6，则认为匹配成功，返回true
  */
-int FaceDatabase::recognizeFace(const std::vector<float>& feature, std::string& message) {
+bool FaceDatabase::recognizeFace(const std::vector<float>& feature, int& outId) {
+    outId = -1;  // 初始化为无效值
+
     if (!is_init || !db) {
-        message = "数据库未初始化";
-        return -1;
+        return false;
     }
 
     if (feature.empty()) {
-        message = "特征向量为空";
-        return -1;
+        return false;
     }
 
     // 查找最相似的人脸
@@ -184,11 +179,10 @@ int FaceDatabase::recognizeFace(const std::vector<float>& feature, std::string& 
 
     // 相似度达到阈值则认为识别成功
     if (similar_id > 0 && max_similarity >= SIMILARITY_THRESHOLD) {
-        message = "你是" + std::to_string(similar_id) + "号";
-        return similar_id;
+        outId = similar_id;
+        return true;
     } else {
-        message = "请先录入人脸";
-        return -1;
+        return false;
     }
 }
 
