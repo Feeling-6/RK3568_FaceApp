@@ -9,10 +9,6 @@ static float REFERENCE_PTS_112[5][2] = {
     {41.5493f, 92.3655f}, {70.7299f, 92.2041f}
 };
 
-static inline float clip(float x, float min, float max) {
-    return x < min ? min : (x > max ? max : x);
-}
-
 RetinaFace::RetinaFace(const std::string& modelPath) : ctx(0), model_data(nullptr) {
     std::ifstream ifs(modelPath, std::ios::binary);
     if (ifs.is_open()) {

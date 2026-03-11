@@ -29,7 +29,7 @@ bool CameraManager::openCamera(int deviceId)
     // --- 关键设置：针对 USB 摄像头的优化 ---
     // 设置为 MJPG 格式，保证高帧率传输
     m_cap.set(cv::CAP_PROP_FOURCC, cv::VideoWriter::fourcc('M', 'J', 'P', 'G'));
-    // 设置分辨率，建议 1280x720，既清晰又比 1080p 跑得快(我就要1080p)
+    // 设置分辨率，建议 1280x720，既清晰又比 1080p 跑得快
     m_cap.set(cv::CAP_PROP_FRAME_WIDTH, 1280);
     m_cap.set(cv::CAP_PROP_FRAME_HEIGHT, 720);
 

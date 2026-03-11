@@ -47,7 +47,6 @@ bool FaceRecognitionBackend::initialize()
     m_camera = new CameraManager(this);
 
     if (m_camera->openCamera(9)) {
-        m_camera->start();
         m_cameraReady = true;
         qDebug() << "✓ 摄像头线程已启动 (/dev/video9)";
         emit cameraReadyChanged();
