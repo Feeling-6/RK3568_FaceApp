@@ -66,7 +66,7 @@ file(GLOB_RECURSE SRC_FILES
 
 # Qt 资源文件 (包含 QML)
 set(RESOURCE_FILES
-    resources.qrc
+    src/qml/resources.qrc
 )
 
 # =============================================================

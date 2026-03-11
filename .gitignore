@@ -40,6 +40,7 @@ Makefile*
 .claude/
 CLAUDE.md
 GEMINI.md
+AGENTS.md
 
 # ---------------------
 # 5. 特殊文件处理 (AI 模型)

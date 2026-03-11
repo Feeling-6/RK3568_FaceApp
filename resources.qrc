@@ -1,6 +1,0 @@
-<RCC>
-    <qresource prefix="/">
-        <file>src/qml/main.qml</file>
-        <file>src/qml/ModernButton.qml</file>
-    </qresource>
-</RCC>
