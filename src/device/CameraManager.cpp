@@ -93,9 +93,6 @@ void CameraManager::run()
         // 2. 转换为 QImage 发送给 UI (不加锁，避免阻塞采集)
         QImage image = matToQImage(tempFrame);
         emit newFrameCaptured(image);
-
-        // 稍微休眠一下控制帧率，防止把 UI 线程卡死 (例如限制在 30fps)
-        QThread::msleep(16);
     }
 }
 

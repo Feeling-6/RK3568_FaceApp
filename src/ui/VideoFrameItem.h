@@ -3,14 +3,13 @@
 
 #include <QQuickPaintedItem>
 #include <QImage>
-#include <QMutex>
-#include <opencv2/opencv.hpp>
 
 /**
- * @brief 自定义 QML 组件，用于显示 OpenCV Mat 格式的摄像头画面
+ * @brief 自定义 QML 组件，用于显示摄像头画面
  *
  * 继承 QQuickPaintedItem，在 paint() 方法中将 QImage 绘制到 QML 场景中。
- * 线程安全：使用 QMutex 保护 m_image，因为更新可能来自其他线程。
+ * 线程安全由 Qt QueuedConnection 保证：updateFrame slot 在主线程执行，
+ * QImage 跨线程传递时自动深拷贝，无需手动加锁。
  */
 class VideoFrameItem : public QQuickPaintedItem
 {
@@ -31,15 +30,8 @@ public slots:
      */
     void updateFrame(const QImage &image);
 
-    /**
-     * @brief 更新要显示的帧（从 cv::Mat）
-     * @param frame OpenCV Mat 格式的画面
-     */
-    void updateFrameFromMat(const cv::Mat &frame);
-
 private:
     QImage m_image;      // 当前要显示的图像
-    QMutex m_mutex;      // 保护 m_image 的互斥锁
 };
 
 #endif // VIDEOFRAMEITEM_H

@@ -5,6 +5,7 @@
 #include <QDebug>
 #include "ui/VideoFrameItem.h"
 #include "ui/FaceRecognitionBackend.h"
+#include "device/CameraManager.h"
 
 int main(int argc, char *argv[])
 {
@@ -54,8 +55,8 @@ int main(int argc, char *argv[])
         // 查找 VideoFrameItem 实例
         VideoFrameItem *videoFrame = obj->findChild<VideoFrameItem*>("videoFrame");
         if (videoFrame) {
-            // 连接信号：backend 发送帧 -> VideoFrameItem 更新显示
-            QObject::connect(&backend, &FaceRecognitionBackend::frameReady,
+            // 直连相机信号：CameraManager 硬件限速，复用 RGA 转换路径
+            QObject::connect(backend.camera(), &CameraManager::newFrameCaptured,
                            videoFrame, &VideoFrameItem::updateFrame);
             qDebug() << "✓ VideoFrameItem 连接成功";
         } else {

@@ -1,6 +1,5 @@
 #include "VideoFrameItem.h"
 #include <QPainter>
-#include <QMutexLocker>
 
 VideoFrameItem::VideoFrameItem(QQuickItem *parent)
     : QQuickPaintedItem(parent)
@@ -12,10 +11,7 @@ VideoFrameItem::VideoFrameItem(QQuickItem *parent)
 
 void VideoFrameItem::paint(QPainter *painter)
 {
-    QMutexLocker locker(&m_mutex);
-
     if (m_image.isNull()) {
-        // 没有图像时不绘制
         return;
     }
 
@@ -46,63 +42,6 @@ void VideoFrameItem::paint(QPainter *painter)
 
 void VideoFrameItem::updateFrame(const QImage &image)
 {
-    {
-        QMutexLocker locker(&m_mutex);
-        m_image = image;
-    }
-
-    // 触发重绘
+    m_image = image;
     update();
-}
-
-void VideoFrameItem::updateFrameFromMat(const cv::Mat &frame)
-{
-    if (frame.empty()) {
-        return;
-    }
-
-    // 将 cv::Mat 转换为 QImage
-    QImage image;
-
-    if (frame.type() == CV_8UC3) {
-        // BGR 格式（OpenCV 默认）
-        image = QImage(
-            frame.data,
-            frame.cols,
-            frame.rows,
-            static_cast<int>(frame.step),
-            QImage::Format_BGR888
-        ).copy(); // 深拷贝以避免数据生命周期问题
-    } else if (frame.type() == CV_8UC1) {
-        // 灰度图
-        image = QImage(
-            frame.data,
-            frame.cols,
-            frame.rows,
-            static_cast<int>(frame.step),
-            QImage::Format_Grayscale8
-        ).copy();
-    } else if (frame.type() == CV_8UC4) {
-        // RGBA 格式
-        image = QImage(
-            frame.data,
-            frame.cols,
-            frame.rows,
-            static_cast<int>(frame.step),
-            QImage::Format_RGBA8888
-        ).copy();
-    } else {
-        // 不支持的格式，尝试转换为 BGR
-        cv::Mat converted;
-        cv::cvtColor(frame, converted, cv::COLOR_GRAY2BGR);
-        image = QImage(
-            converted.data,
-            converted.cols,
-            converted.rows,
-            static_cast<int>(converted.step),
-            QImage::Format_BGR888
-        ).copy();
-    }
-
-    updateFrame(image);
 }

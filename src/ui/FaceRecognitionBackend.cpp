@@ -8,7 +8,6 @@ FaceRecognitionBackend::FaceRecognitionBackend(QObject *parent)
     , m_retinaface(nullptr)
     , m_mobilefacenet(nullptr)
     , m_facedb(nullptr)
-    , m_frameUpdateTimer(nullptr)
     , m_cameraReady(false)
     , m_statusMessage("")
     , m_isProcessing(false)
@@ -17,12 +16,6 @@ FaceRecognitionBackend::FaceRecognitionBackend(QObject *parent)
 
 FaceRecognitionBackend::~FaceRecognitionBackend()
 {
-    // 停止定时器
-    if (m_frameUpdateTimer) {
-        m_frameUpdateTimer->stop();
-        delete m_frameUpdateTimer;
-    }
-
     // 安全关闭摄像头线程
     if (m_camera && m_camera->isRunning()) {
         m_camera->closeCamera();
@@ -57,11 +50,6 @@ bool FaceRecognitionBackend::initialize()
         emit cameraReadyChanged();
         return false;
     }
-
-    // 启动定时器，定期从摄像头获取帧并发送到 QML
-    m_frameUpdateTimer = new QTimer(this);
-    connect(m_frameUpdateTimer, &QTimer::timeout, this, &FaceRecognitionBackend::updateCameraFrame);
-    m_frameUpdateTimer->start(33); // 约 30 FPS
 
     // ---------------------------------------------------------
     // 2. 初始化 RetinaFace 模型
@@ -117,30 +105,6 @@ bool FaceRecognitionBackend::initialize()
     setStatusMessage("系统就绪");
     qDebug() << "=== FaceRecognitionBackend 初始化完成 ===";
     return true;
-}
-
-void FaceRecognitionBackend::updateCameraFrame()
-{
-    if (!m_camera) return;
-
-    cv::Mat frame;
-    if (m_camera->getLatestFrame(frame) && !frame.empty()) {
-        // 将 cv::Mat 转换为 QImage
-        QImage image;
-        if (frame.type() == CV_8UC3) {
-            image = QImage(
-                frame.data,
-                frame.cols,
-                frame.rows,
-                static_cast<int>(frame.step),
-                QImage::Format_BGR888
-            ).copy();
-        }
-
-        if (!image.isNull()) {
-            emit frameReady(image);
-        }
-    }
 }
 
 void FaceRecognitionBackend::enrollFace()

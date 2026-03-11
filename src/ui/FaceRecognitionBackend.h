@@ -3,7 +3,6 @@
 
 #include <QObject>
 #include <QString>
-#include <QTimer>
 #include "device/CameraManager.h"
 #include "algo/RetinaFace.h"
 #include "algo/MobileFaceNet.h"
@@ -36,6 +35,9 @@ public:
     QString statusMessage() const { return m_statusMessage; }
     bool isProcessing() const { return m_isProcessing; }
 
+    // 供 main.cpp 建立直连，无需经过 Backend 中转
+    CameraManager* camera() const { return m_camera; }
+
 public slots:
     /**
      * @brief 录入人脸（从 QML 调用）
@@ -48,21 +50,10 @@ public slots:
     void recognizeFace();
 
 signals:
-    /**
-     * @brief 发送新的摄像头帧到 VideoFrameItem
-     */
-    void frameReady(const QImage &image);
-
     // 属性变化通知信号
     void cameraReadyChanged();
     void statusMessageChanged();
     void isProcessingChanged();
-
-private slots:
-    /**
-     * @brief 处理摄像头新帧（定时器触发）
-     */
-    void updateCameraFrame();
 
 private:
     /**
@@ -80,9 +71,6 @@ private:
     RetinaFace *m_retinaface;
     MobileFaceNet *m_mobilefacenet;
     FaceDatabase *m_facedb;
-
-    // 定时器（定期从摄像头获取帧并发送到 QML）
-    QTimer *m_frameUpdateTimer;
 
     // 状态属性
     bool m_cameraReady;
