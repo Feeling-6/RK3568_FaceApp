@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
     });
 
     // 加载 QML 文件（路径必须匹配 resources.qrc 中的定义）
-    const QUrl url(QStringLiteral("qrc:/src/qml/main.qml"));
+    const QUrl url(QStringLiteral("qrc:/main.qml"));
     engine.load(url);
 
     if (engine.rootObjects().isEmpty()) {
