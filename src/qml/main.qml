@@ -6,7 +6,6 @@ import com.rk3568.face 1.0
 ApplicationWindow {
     id: rootWindow
     visible: true
-    visibility: Window.FullScreen
     title: "RK3568 人脸识别系统"
 
     readonly property int sidebarWidth: 200

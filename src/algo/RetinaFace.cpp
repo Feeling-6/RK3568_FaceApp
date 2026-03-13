@@ -9,7 +9,8 @@ static float REFERENCE_PTS_112[5][2] = {
     {41.5493f, 92.3655f}, {70.7299f, 92.2041f}
 };
 
-RetinaFace::RetinaFace(const std::string& modelPath) : ctx(0), model_data(nullptr) {
+RetinaFace::RetinaFace(const std::string& modelPath)
+    : ctx(0), model_data(nullptr), model_data_size(0), input_attrs(nullptr), output_attrs(nullptr) {
     std::ifstream ifs(modelPath, std::ios::binary);
     if (ifs.is_open()) {
         ifs.seekg(0, std::ios::end);
@@ -122,12 +123,6 @@ int RetinaFace::detect(const cv::Mat& inputImg, std::vector<FaceInfo>& faces) {
         std::cerr << "[RetinaFace] RGA resize failed: " << status << std::endl;
         return -1;
     }
-
-    /* 用openCV：
-    cv::Mat resized_img;
-    cv::resize(inputImg, resized_img, cv::Size(MODEL_WIDTH, MODEL_HEIGHT));
-    cv::cvtColor(resized_img, resized_img, cv::COLOR_BGR2RGB);
-    */
 
     rknn_input inputs[1];
     memset(inputs, 0, sizeof(inputs));

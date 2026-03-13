@@ -35,7 +35,6 @@ int main(int argc, char *argv[])
     // 将后端实例暴露给 QML（作为全局单例）
     engine.rootContext()->setContextProperty("backend", &backend);
 
-    // 连接后端的 frameReady 信号到 QML 的 VideoFrameItem
     // 注意：由于我们在 QML 中已经有了 VideoFrameItem，
     // 我们需要在 QML 加载后获取它的引用并连接信号
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreated, [&](QObject *obj, const QUrl &) {

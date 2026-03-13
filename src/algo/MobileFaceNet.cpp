@@ -3,7 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-MobileFaceNet::MobileFaceNet() : ctx(0), is_init(false) {}
+MobileFaceNet::MobileFaceNet()
+    : ctx(0), input_attrs(nullptr), output_attrs(nullptr), is_init(false) {}
 
 MobileFaceNet::~MobileFaceNet() {
     release();
