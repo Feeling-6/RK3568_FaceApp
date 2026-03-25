@@ -2,6 +2,7 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QQuickWindow>
+#include <QQuickStyle>
 #include <QDebug>
 #include "ui/VideoFrameItem.h"
 #include "ui/FaceRecognitionBackend.h"
@@ -9,6 +10,8 @@
 
 int main(int argc, char *argv[])
 {
+    //全局风格
+    QQuickStyle::setStyle("Universal");
     // 使用 QGuiApplication（Qt Quick 推荐）
     QGuiApplication app(argc, argv);
 
