@@ -1,3 +1,5 @@
+
+
 # RK3568 人脸识别系统
 
 基于瑞芯微 **RK3568** 芯片的实时人脸识别应用。利用板载 NPU 进行硬件加速推理，使用 **Qt5 Quick/QML** 构建触摸屏全屏 UI，人脸特征存储于本地 SQLite 数据库。
@@ -289,7 +291,7 @@ setRenderTarget(QQuickPaintedItem::Image);
 | `CameraManager::run()` | 独立 QThread | `QMutex` 保护 `m_currentFrame` |
 | `updateCameraFrame()` | 主线程（QTimer）| 无需锁，`getLatestFrame()` 内部加锁 |
 | `enrollFace()` / `recognizeFace()` | 主线程（QML slot）| RKNN 上下文非线程安全，串行执行 |
-| `VideoFrameItem::paint()` | Qt 渲染线程 | `QMutex` 保护 `m_image` |
+| `VideoFrameItem::paint()` | Qt 渲染线程 | 跨线程 `QueuedConnection` 自动深拷贝 `QImage`，无需手动加锁 |
 
 ### 人脸对齐原理
 
